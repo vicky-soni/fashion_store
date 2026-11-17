@@ -66,6 +66,7 @@ class AboutScreen extends StatelessWidget {
             _section(
               'Developer Details',
               'Developer: Vicky Soni\n'
+              'Developer: Sachdev Parihar\n'
               'Course: Master of Computer Applications (MCA)\n'
               'Project: Fashion Store E-Commerce Application\n'
               'Project Type: Academic Project',
