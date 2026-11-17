@@ -68,6 +68,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     OrderProvider provider,
   ) {
     final canCancel = order.status == 'Placed';
+    final canDelete = order.status == 'Cancelled';
 
     return Container(
       padding: const EdgeInsets.all(15),
@@ -93,7 +94,9 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               _statusBadge(order.status),
             ],
           ),
+
           const SizedBox(height: 10),
+
           Text(
             _formatDate(order.createdAt),
             style: const TextStyle(
@@ -101,16 +104,20 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               fontSize: 12,
             ),
           ),
+
           const SizedBox(height: 12),
           const Divider(color: AppTheme.border),
           const SizedBox(height: 8),
+
           Text(
             '${order.items.length} different products',
             style: const TextStyle(
               color: AppTheme.textSecondary,
             ),
           ),
+
           const SizedBox(height: 10),
+
           ...order.items.map(
             (item) => Padding(
               padding: const EdgeInsets.only(bottom: 7),
@@ -133,15 +140,19 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               ),
             ),
           ),
+
           const SizedBox(height: 8),
           const Divider(color: AppTheme.border),
           const SizedBox(height: 8),
+
           _detailRow('Payment', order.paymentMethod),
           const SizedBox(height: 7),
           _detailRow('Mobile', order.mobile),
           const SizedBox(height: 7),
           _detailRow('PIN Code', order.pincode),
+
           const SizedBox(height: 12),
+
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -161,6 +172,8 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
               ),
             ],
           ),
+
+          // Cancel button for placed orders.
           if (canCancel) ...[
             const SizedBox(height: 14),
             SizedBox(
@@ -178,6 +191,31 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                   provider,
                 ),
                 child: const Text('CANCEL ORDER'),
+              ),
+            ),
+          ],
+
+          // Delete button for cancelled orders.
+          if (canDelete) ...[
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.redAccent,
+                  side: const BorderSide(
+                    color: Colors.redAccent,
+                  ),
+                ),
+                onPressed: order.id == null
+                    ? null
+                    : () => _confirmDelete(
+                          context,
+                          order,
+                          provider,
+                        ),
+                icon: const Icon(Icons.delete_outline),
+                label: const Text('DELETE ORDER'),
               ),
             ),
           ],
@@ -281,6 +319,57 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
           success
               ? 'Order cancelled successfully.'
               : 'Unable to cancel this order.',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDelete(
+    BuildContext context,
+    Order order,
+    OrderProvider provider,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: AppTheme.surface,
+          title: const Text('Delete Order?'),
+          content: Text(
+            'Are you sure you want to permanently delete Order #${order.id}? This action cannot be undone.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.pop(dialogContext, false),
+              child: const Text('KEEP ORDER'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () =>
+                  Navigator.pop(dialogContext, true),
+              child: const Text('YES, DELETE'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final success = await provider.deleteOrder(order.id!);
+
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success
+              ? 'Order deleted permanently.'
+              : 'Unable to delete order.',
         ),
       ),
     );

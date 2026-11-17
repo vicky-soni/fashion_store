@@ -73,9 +73,7 @@ class OrderProvider extends ChangeNotifier {
       );
 
       await _database.insertOrder(order);
-
       await cart.clearCart();
-
       await loadOrders();
 
       return true;
@@ -97,6 +95,23 @@ class OrderProvider extends ChangeNotifier {
       return cancelled;
     } catch (e) {
       _error = 'Unable to cancel order: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // Permanently delete an order from the database.
+  Future<bool> deleteOrder(int orderId) async {
+    try {
+      _error = null;
+
+      await _database.deleteOrder(orderId);
+
+      await loadOrders();
+
+      return true;
+    } catch (e) {
+      _error = 'Unable to delete order: $e';
       notifyListeners();
       return false;
     }
