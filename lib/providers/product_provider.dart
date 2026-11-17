@@ -1,5 +1,6 @@
 
 import 'package:flutter/foundation.dart';
+
 import '../database/database_helper.dart';
 import '../models/product.dart';
 
@@ -11,7 +12,9 @@ class ProductProvider extends ChangeNotifier {
   String? _error;
 
   List<Product> get products => _products;
+
   bool get isLoading => _isLoading;
+
   String? get error => _error;
 
   Future<void> loadProducts() async {
@@ -27,5 +30,14 @@ class ProductProvider extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<Product?> getProductById(int id) async {
+    try {
+      return await _database.getProductById(id);
+    } catch (e) {
+      debugPrint('Product fetch error: $e');
+      return null;
+    }
   }
 }
